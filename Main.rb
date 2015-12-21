@@ -3,10 +3,7 @@
  For more information find http://github.com/jeferrier
 =end
 
-# File.open(ARGV[0]).each_line do |line|
-# # Do something with line, ignore empty lines
-# #...
-# end
+require "pry"
 
 class Main
 
@@ -17,6 +14,14 @@ class Main
       parse_file_for_structures(@output_file)
     end
 
+    @state_container = [
+      "none",
+      "task_declaration",
+      "exit"
+    ]
+    @current_state = :none
+    @input = nil
+
   end
 
   def main
@@ -25,11 +30,15 @@ class Main
     while true do
 
       #Read
-      input = gets
-      return if input == nil
+      @input = gets
+      #Error situation, STDIN should never gets => nil
+      return if @input == nil
+      @input = @input.chomp
 
       #Eval
-      return if input.chomp.eql? "exit"
+      begin
+        state_transitioned = state_transition_function
+      end while state_transitioned == true
 
       #Print each line with a timestamp
       stamp = Time.now().strftime("[%H:%M:%S] ")
@@ -60,6 +69,28 @@ class Main
 
   def parse_file_for_structures(output_file)
 
+  end
+
+  def state_transition_function
+
+    new_state = ""
+
+    @state_container.each do |state|
+      if state.to_sym == @current_state
+        state_function = self.method(current_state)
+        new_state = state_function.call().to_sym
+        to_return = not(@current_state == new_state)
+        @current_state = new_state
+        return to_return
+      end
+    end
+
+  end
+
+  def none
+  end
+
+  def exit
   end
 
 end
