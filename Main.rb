@@ -35,6 +35,8 @@ class Main
       return if @input == nil
       @input = @input.chomp
 
+      return if @input.eql? "exit"
+
       #Eval
       begin
         state_transitioned = state_transition_function
@@ -42,7 +44,7 @@ class Main
 
       #Print each line with a timestamp
       stamp = Time.now().strftime("[%H:%M:%S] ")
-      @output_file.write(stamp + input)
+      @output_file.write(stamp + @input)
       @output_file.flush
 
     end
@@ -77,7 +79,7 @@ class Main
 
     @state_container.each do |state|
       if state.to_sym == @current_state
-        state_function = self.method(current_state)
+        state_function = self.method(@current_state)
         new_state = state_function.call().to_sym
         to_return = not(@current_state == new_state)
         @current_state = new_state
@@ -88,6 +90,7 @@ class Main
   end
 
   def none
+    return "none"
   end
 
   def exit
