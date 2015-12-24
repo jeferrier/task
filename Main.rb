@@ -4,6 +4,7 @@
 =end
 
 require "pry"
+require "pry-nav"
 
 class Main
 
@@ -16,7 +17,6 @@ class Main
 
     @state_container = [
       "none",
-      "task_declaration",
       "exit"
     ]
     @current_state = :none
@@ -30,21 +30,21 @@ class Main
     while true do
 
       #Read
-      @input = gets
+      input = gets
       #Error situation, STDIN should never gets => nil
-      return if @input == nil
-      @input = @input.chomp
-
-      return if @input.eql? "exit"
+      return if input == nil
+      @input = input.chomp
 
       #Eval
       begin
         state_transitioned = state_transition_function
       end while state_transitioned == true
 
+      return if @current_state == :exit
+
       #Print each line with a timestamp
       stamp = Time.now().strftime("[%H:%M:%S] ")
-      @output_file.write(stamp + @input)
+      @output_file.write(stamp + input)
       @output_file.flush
 
     end
@@ -73,6 +73,11 @@ class Main
 
   end
 
+  def visor
+    return @input if @input.eql? "exit"
+    return ""
+  end
+
   def state_transition_function
 
     new_state = ""
@@ -90,10 +95,19 @@ class Main
   end
 
   def none
-    return "none"
+    relinquish = visor()
+    if relinquish.empty?
+      return "none"
+    else
+      return relinquish
+    end
   end
 
   def exit
+    #Checking for this state will happen in the main function
+    #Do any wrap up before exiting the program
+    # ...
+    return "exit"
   end
 
 end
