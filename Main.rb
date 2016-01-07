@@ -5,6 +5,7 @@
 
 require "pry"
 require "pry-nav"
+load "Task.rb"
 
 class Main
 
@@ -17,10 +18,36 @@ class Main
 
     @state_container = [
       "none",
+      "task_decl",
+      "task_input",
       "exit"
     ]
+    @task_stack = Array.new
     @current_state = :none
+    @current_task = nil
     @input = nil
+
+  end
+
+  def get_file_name
+    #Get date info
+    date = Time.now()
+    date_string = date.strftime("%Y.%m.%d")
+
+    #Assemble filename
+    @file_name = date_string + "_log.txt"
+  end
+
+  def access_log_file(file_name)
+    #Check to see if the file already exists. If it does,
+    #we're probably going to want to parse it before we do anything else
+    @pre_parse = File.exists?(file_name)
+
+    #Open File
+    @output_file = File.open(file_name, "a")
+  end
+
+  def parse_file_for_structures(output_file)
 
   end
 
@@ -51,30 +78,9 @@ class Main
 
   end
 
-  def get_file_name
-    #Get date info
-    date = Time.now()
-    date_string = date.strftime("%Y.%m.%d")
-
-    #Assemble filename
-    @file_name = date_string + "_log.txt"
-  end
-
-  def access_log_file(file_name)
-    #Check to see if the file already exists. If it does,
-    #we're probably going to want to parse it before we do anything else
-    @pre_parse = File.exists?(file_name)
-
-    #Open File
-    @output_file = File.open(file_name, "a")
-  end
-
-  def parse_file_for_structures(output_file)
-
-  end
-
   def visor
     return @input if @input.eql? "exit"
+    return "task_decl" if @input =~ /^TASK/
     return ""
   end
 
@@ -99,6 +105,65 @@ class Main
     if relinquish.empty?
       return "none"
     else
+      return relinquish
+    end
+  end
+
+  def task_decl
+
+    binding.pry()
+
+    relinquish = visor()
+    if relinquish.empty? || (relinquish.eql? "task_decl")
+
+      #Normal task declaration
+      if @input =~ /^TASK/
+
+        @input = @input.sub(/^TASK/, "").strip()
+
+        if @input.empty?
+          if @current_task == nil
+            #No sense creating a new empty task
+            return "none"
+          else
+            #Return to the previous task's input chain
+            return "task_input"
+          end
+        end
+
+        unless @current_task == nil
+          @task_stack.push(@current_task)
+        end
+
+        @current_task = Task.new
+        @current_task.title = @input
+        return "task_decl"
+
+      elsif @input =~ /^    /
+        @current_task.add_description_line(@input)
+        return "task_decl"
+
+      else
+        return "task_input"
+      end
+
+    else
+      #Wrap up task delcaration before handing off to next state
+      # ...
+      return relinquish
+    end
+  end
+
+  def task_input
+    relinquish = visor()
+    if relinquish.empty?
+
+      @current_task.add_line(@input)
+      return "task_input"
+
+    else
+      #Wrap up task input before handing off to next state
+      # ...
       return relinquish
     end
   end
